@@ -153,7 +153,8 @@ def parse_motion(bvh):
 	current_token = current_token  + 1
 	if (bvh[current_token][1] != "Time"):
 		return None
-	current_token = current_token  + 8
+	current_token = current_token + 1
+
 	############# TEMPORARY FIX #######################
 
 	translation = [ () ] * frame_count
@@ -164,23 +165,38 @@ def parse_motion(bvh):
 	frame_rate = float(bvh[current_token][1])
 	frame_time = 1
 	motions = [ () ] * frame_count
+
+	motion_channels.insert(0, ("HipPos", "SomeDirection"))
+	motion_channels.insert(0, ("HipPos", "SomeDirection"))
+	motion_channels.insert(0, ("HipPos", "SomeDirection"))
+	motion_channels.insert(0, ("Hips", "SomeDirection"))
+	motion_channels.insert(0, ("Hips", "SomeDirection"))
+	motion_channels.insert(0, ("Hips", "SomeDirection"))
+
 	for i in range(0, 3):
-		#print "Parsing frame ", i
+
 		channel_values = []
 		for channel in motion_channels:
-			print current_token 
 			channel_values.append((channel[0], channel[1], float(bvh[current_token][1])))
 			current_token = current_token + 1
+			print bvh[current_token][1], channel[0]
 		motions[i] = (frame_time, channel_values)
-		#print motions[i]
 
-		############# TEMPORARY FIX #######################
-		###################################################
-		translation[frame_time]['Hips']= [0,0,0]
-		current_token = current_token + 6
+
+		print "###################"
 		frame_time = frame_time + 1
 
-		
+def update_hips(arr, frame_time):
+	print arr
+	
+	px = float(arr[0])
+	py = float(arr[1])
+	pz = float(arr[2])
+	z =  float(arr[3])
+	x =  float(arr[4])
+	y =  float(arr[5])
+
+	translation[frame_time]['Hips']= rotation_matrix(z,x,y,skeleton["Hips"]['offsets'])
 
 
 def sin(x):
@@ -192,57 +208,26 @@ def cos(x):
 def print_motions():
 	global translation
 
-	print frame_count
 	rotations = [ () ] * frame_count
 
 	for i in range(0, 3):
 		t = 0;
 		for index in range(0, len(motion_channels)/3):
-			
-			#print (motion_channels[index*3 + 1][0], index)
-			#print (motion_channels[index*3 + 2][2], index)
 
 			z = motions[i][1][index*3][2]
 			x = motions[i][1][index*3 + 1][2]
 			y = motions[i][1][index*3 + 2][2]
 
-
-			#Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
-			#X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
-			#Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
-			
-			#val = Z.dot(X)
-			#val = val.dot(Y)
-
-			#print z, x, y
-			#print (motion_channels[index*3][0], z, x, y)
-
-			offsets = np.array(skeleton[motion_channels[index*3][0]]['offsets'])
-			#tvector = np.array([0,0,0,1])
-
-			#print val#.dot(t)
-			
-			#val = np.vstack([np.c_[val,temp], tvector])
-			
-
 			name = motion_channels[index*3][0]
 
+			if (name == "HipPos"):
+				break
+			offsets = np.array(skeleton[name]['offsets'])
+			
 			val = rotation_matrix(z,x,y,offsets)
 
-			print val, motion_channels[index*3][0]
 			translation[i][name] = val
-			#print skeleton[motion_channels[index*3][0]]
 
-	#print motion_channels
-	#print skeleton['Hips']
-
-	#for i in range(0, len(motion_channels)/3):
-		#print motion_channels[i*3]
-
-	#for (name,bone) in skeleton.iteritems():
-		#print name
-
-	#print len(skeleton)
 
 def store_matrix(vertex, matrix, parent, frame):
 	dictionary = {}
