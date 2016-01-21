@@ -15,7 +15,6 @@ current_token = 0
 frame_count = 0
 
 skeleton = {}
-translation = []
 bone_context = []
 motion_channels = []
 motions = []
@@ -134,7 +133,6 @@ def parse_motion(bvh):
 	global current_token
 	global frame_count
 	global motions 
-	global translation
 
 	if (bvh[current_token][0] != "IDENT"):
 		print "Unexpected text"
@@ -156,13 +154,8 @@ def parse_motion(bvh):
 	current_token = current_token  + 8
 	############# TEMPORARY FIX #######################
 
-	translation = [ () ] * frame_count
-
-	for i in range(0, frame_count):
-		translation[i] = {}
-
 	frame_rate = float(bvh[current_token][1])
-	frame_time = 1
+	frame_time = 0.0
 	motions = [ () ] * frame_count
 	for i in range(0, 3):
 		#print "Parsing frame ", i
@@ -173,14 +166,11 @@ def parse_motion(bvh):
 			current_token = current_token + 1
 		motions[i] = (frame_time, channel_values)
 		#print motions[i]
+		frame_time = frame_time + frame_rate
 
 		############# TEMPORARY FIX #######################
 		###################################################
-		translation[frame_time]['Hips']= [0,0,0]
 		current_token = current_token + 6
-		frame_time = frame_time + 1
-
-		
 
 
 def sin(x):
@@ -190,8 +180,6 @@ def cos(x):
 	return math.cos(math.radians(x))
 
 def print_motions():
-	global translation
-
 	print frame_count
 	rotations = [ () ] * frame_count
 
@@ -207,34 +195,31 @@ def print_motions():
 			y = motions[i][1][index*3 + 2][2]
 
 
-			#Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
-			#X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
-			#Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
+			Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
+			X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
+			Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
 			
-			#val = Z.dot(X)
-			#val = val.dot(Y)
+			val = Z.dot(X)
 
-			#print z, x, y
-			#print (motion_channels[index*3][0], z, x, y)
+			val = val.dot(Y)
 
-			offsets = np.array(skeleton[motion_channels[index*3][0]]['offsets'])
-			#tvector = np.array([0,0,0,1])
+			print z, x, y
+
+			print (motion_channels[index*3][0], z, x, y)
+
+			temp = np.array(skeleton[motion_channels[index*3][0]]['offsets'])
+			tvector = np.array([0,0,0,1])
 
 			#print val#.dot(t)
 			
-			#val = np.vstack([np.c_[val,temp], tvector])
-			
-
-			name = motion_channels[index*3][0]
-
-			val = rotation_matrix(z,x,y,offsets)
-
-			print val, motion_channels[index*3][0]
-			translation[i][name] = val
+			#print np.vstack([np.c_[val,temp], tvector])
 			#print skeleton[motion_channels[index*3][0]]
 
 	#print motion_channels
 	#print skeleton['Hips']
+
+	print len(motion_channels)
+	print motions[0][1][len(motions[0][1])-1]
 
 	#for i in range(0, len(motion_channels)/3):
 		#print motion_channels[i*3]
@@ -244,33 +229,7 @@ def print_motions():
 
 	#print len(skeleton)
 
-def store_matrix(vertex, matrix, parent, frame):
-	dictionary = {}
-	dictionary[vertex] = (matrix, parent, frame)
-
-def calculate_animation():
-	dictionary = {}
-	for i in dictionary:
-		matrix = [] #do the transpose and calculate vertex position through time
-		# use rotation_matrix(m, m2)
-
-def rotation_matrix(z, x, y, offsets):
-	Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
-	X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
-	Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
-
-	val = Z.dot(X)
-	val = val.dot(Y)
-
-	tvector = np.array([0,0,0,1])
-
-	#print val#.dot(t)
-	
-	val = np.vstack([np.c_[val,offsets], tvector])
-	
-	return val
-
-
+#def rotation_matrix(v1, v2):
 	# perform vector operations that give us the Matrix rotation R
 	# after that compute M using M = TR
 	# after that get the vector value of the joint
