@@ -1,5 +1,7 @@
 import re
 import numpy as np
+import math
+from scipy import linalg
 
 bvh_file = "Example1.bvh"
 
@@ -149,28 +151,83 @@ def parse_motion(bvh):
 	current_token = current_token  + 1
 	if (bvh[current_token][1] != "Time"):
 		return None
-	current_token = current_token  + 1
+	current_token = current_token  + 8
+	############# TEMPORARY FIX #######################
+
 	frame_rate = float(bvh[current_token][1])
 	frame_time = 0.0
 	motions = [ () ] * frame_count
-	for i in range(0, frame_count):
-		print "Parsing frame ", i
+	for i in range(0, 3):
+		#print "Parsing frame ", i
 		channel_values = []
 		for channel in motion_channels:
+			print current_token 
 			channel_values.append((channel[0], channel[1], float(bvh[current_token][1])))
 			current_token = current_token + 1
 		motions[i] = (frame_time, channel_values)
 		#print motions[i]
 		frame_time = frame_time + frame_rate
 
+		############# TEMPORARY FIX #######################
+		###################################################
+		current_token = current_token + 6
+
+
+def sin(x):
+	return math.sin(math.radians(x))
+
+def cos(x):
+	return math.cos(math.radians(x))
+
 def print_motions():
 	print frame_count
+	rotations = [ () ] * frame_count
 
-	for i in range(0, frame_count):
-		print motions[i][1][0]
-		print motions[i][1][1]
-		print motions[i][1][2]
-		print motions[i][1][3]
+	for i in range(0, 3):
+		t = 0;
+		for index in range(0, len(motion_channels)/3):
+			
+			#print (motion_channels[index*3 + 1][0], index)
+			#print (motion_channels[index*3 + 2][2], index)
+
+			z = motions[i][1][index*3][2]
+			x = motions[i][1][index*3 + 1][2]
+			y = motions[i][1][index*3 + 2][2]
+
+
+			Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
+			X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
+			Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
+			
+			val = Z.dot(X)
+
+			val = val.dot(Y)
+
+			print z, x, y
+
+			print (motion_channels[index*3][0], z, x, y)
+
+			temp = np.array(skeleton[motion_channels[index*3][0]]['offsets'])
+			tvector = np.array([0,0,0,1])
+
+			#print val#.dot(t)
+			
+			#print np.vstack([np.c_[val,temp], tvector])
+			#print skeleton[motion_channels[index*3][0]]
+
+	#print motion_channels
+	#print skeleton['Hips']
+
+	print len(motion_channels)
+	print motions[0][1][len(motions[0][1])-1]
+
+	#for i in range(0, len(motion_channels)/3):
+		#print motion_channels[i*3]
+
+	#for (name,bone) in skeleton.iteritems():
+		#print name
+
+	#print len(skeleton)
 
 #def rotation_matrix(v1, v2):
 	# perform vector operations that give us the Matrix rotation R
@@ -212,11 +269,11 @@ if __name__ == "__main__":
 	bvh_file.close()
 	tokens, remainder = scanner.scan(bvh)
 	parse_hierarchy(tokens)
-	for (name,bone) in skeleton.iteritems():
-		print "Bone " + name
-		if bone.has_key("channels"):
-			print "Channels ", bone["channels"]
-		print "Offsets ", bone["offsets"]
+	#for (name,bone) in skeleton.iteritems():
+	#	print "Bone " + name
+	#	if bone.has_key("channels"):
+	#		print "Channels ", bone["channels"]
+	#	print "Offsets ", bone["offsets"]
 	current_token = current_token + 1
 	parse_motion(tokens)
 	print_motions()
