@@ -2,6 +2,7 @@ import re
 import numpy as np
 import math
 from scipy import linalg
+from visual import *
 
 bvh_file = "Example1.bvh"
 
@@ -163,8 +164,10 @@ def parse_motion(bvh):
 		translation[i] = {}
 
 	frame_rate = float(bvh[current_token][1])
-	frame_time = 1
+	frame_time = 0.0
 	motions = [ () ] * frame_count
+
+	current_token = current_token + 1
 
 	motion_channels.insert(0, ("HipPos", "SomeDirection"))
 	motion_channels.insert(0, ("HipPos", "SomeDirection"))
@@ -179,25 +182,9 @@ def parse_motion(bvh):
 		for channel in motion_channels:
 			channel_values.append((channel[0], channel[1], float(bvh[current_token][1])))
 			current_token = current_token + 1
-			print bvh[current_token][1], channel[0]
+		
 		motions[i] = (frame_time, channel_values)
-
-
-		print "###################"
-		frame_time = frame_time + 1
-
-def update_hips(arr, frame_time):
-	print arr
-	
-	px = float(arr[0])
-	py = float(arr[1])
-	pz = float(arr[2])
-	z =  float(arr[3])
-	x =  float(arr[4])
-	y =  float(arr[5])
-
-	translation[frame_time]['Hips']= rotation_matrix(z,x,y,skeleton["Hips"]['offsets'])
-
+		frame_time = frame_time + frame_rate
 
 def sin(x):
 	return math.sin(math.radians(x))
@@ -220,30 +207,21 @@ def print_motions():
 
 			name = motion_channels[index*3][0]
 
-			if (name == "HipPos"):
-				break
-			offsets = np.array(skeleton[name]['offsets'])
+			if (name != "HipPos"):
 			
-			val = rotation_matrix(z,x,y,offsets)
+				offsets = np.array(skeleton[name]['offsets'])
 
-			translation[i][name] = val
+				#print skeleton[name]['parent']
 
+				val = rotation_matrix(z,x,y,offsets)
+				
+				translation[i][name] = val
 
-def store_matrix(vertex, matrix, parent, frame):
-	dictionary = {}
-	dictionary[vertex] = (matrix, parent, frame)
-
-def calculate_animation():
-	dictionary = {}
-	for i in dictionary:
-		matrix = [] #do the transpose and calculate vertex position through time
-		# use rotation_matrix(m, m2)
 
 def rotation_matrix(z, x, y, offsets):
 	Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
 	X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
 	Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
-
 	val = Z.dot(X)
 	val = val.dot(Y)
 
@@ -255,10 +233,78 @@ def rotation_matrix(z, x, y, offsets):
 	
 	return val
 
+def calculate_animation():
+	frame_count = len(translation)
+	#print motions[0][1][0][0]
+	rec_traversal(1, "me")
 
-	# perform vector operations that give us the Matrix rotation R
-	# after that compute M using M = TR
-	# after that get the vector value of the joint
+# Recursive function that calculates the global position of each vertex
+def rec_traversal(frame_number, name):
+	
+	for i in range(0, 2):
+		directory = translation[i]
+
+		#find the ancestors 
+		for index in range(2, len(motion_channels)/3):
+			current = motions[i][1][index*3][0]
+			#print current, skeleton[current]['parent']
+
+
+			#look up the parent and skeleton and compute all the way up
+
+def initial_skeleton(frame_number):
+	#traverse the entire skeleton and create points using the offset 
+	points = []
+	diction = {}
+	for index in range(0, len(motion_channels)/3):
+		if (index == 1):
+			continue
+		name = motions[0][1][index*3][0]
+		offset = skeleton[name]['offsets']
+
+		#print "Name is " + name 
+
+		#print "Offsets are "
+		#print (offset[0], offset[1], offset[2])
+
+		
+
+		if (index == 0):
+			x = motions[frame_number][1][index*3][2]
+			y = motions[frame_number][1][index*3 + 1][2]
+			z = motions[frame_number][1][index*3 + 2][2]
+			pos = np.array([x, y, z, 0])
+			#print point
+			#print translation[frame_number][name]
+
+			point = np.dot(translation[frame_number][name], pos)
+			#print point
+			
+		else:
+			#print "HERE"
+			parent = skeleton[name]['parent']
+
+			#print "Parent is" + parent
+			#print "Parent position is " 
+			#print (diction[parent][0], diction[parent][1], diction[parent][2])
+			point = np.dot(translation[frame_number][name], diction[parent])
+			#print x
+			#print "Position is "
+			#print (x, y, z)
+			
+			print point
+				
+			#print point
+
+		#print point
+		points.append(point)
+		diction[name] = point
+	#print points
+	graph(points)
+	return points
+
+
+
 
 #def triangle_area(joint1, joint2, joint3):
 	# calculate the area using the formula specified in the presentation
@@ -284,9 +330,25 @@ def rotation_matrix(z, x, y, offsets):
 
 #def keyframe_extractor(matrix_across_time):
 
+def graph(arr):
+	#c = color.red
 
+	for i in arr:
+		i1 = i[0]/100
+		i2 = i[1]/100
+		i3 = i[2]/100
+		#print (i1,i2,i3)
+		ball1 = sphere(make_trail = true, pos = (i1,i2,i3), radius = 0.05, color=color.red)
+		#c = curve(pos = (a[0], a[1], a[2]), radius=0.05)
+	
+	#a = vector(0.1,0,0)
 
-
+	#while True:
+		#rate(10)
+		#ball1.pos = ball1.pos + a
+		#c.append(pos = ball1.pos)
+		#if (ball1.pos[0] > 6):
+			#ball1.color = color.yellow
 
 
 if __name__ == "__main__":
@@ -300,6 +362,23 @@ if __name__ == "__main__":
 	#	if bone.has_key("channels"):
 	#		print "Channels ", bone["channels"]
 	#	print "Offsets ", bone["offsets"]
+
+	a = np.array([1,2,3])
+	b = np.array([[0,0,0,6],[0,0,0,4],[0,0,0,6]])
+
 	current_token = current_token + 1
 	parse_motion(tokens)
 	print_motions()
+	calculate_animation()
+
+	scene1 = display(title = "Mocap", x = 0, y =0, width = 800, height = 600, range = 10,
+		background=color.white)
+
+	for i in range(0, 3):
+		initial_skeleton(i)
+
+
+
+
+
+	
