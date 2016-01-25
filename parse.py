@@ -20,6 +20,7 @@ translation = []
 bone_context = []
 motion_channels = []
 motions = []
+root_name = ""
 
 def new_bone(parent, name):
 	bone = { "parent" : parent, "channels" : [], "offsets" : []}
@@ -105,6 +106,7 @@ def parse_joint(bvh, token_index):
 
 def parse_hierarchy(bvh):
 	global current_token
+	global root_name
 	current_token = 0
 	if (bvh[current_token] != ("IDENT", "HIERARCHY")):
 		return None
@@ -172,11 +174,11 @@ def parse_motion(bvh):
 	motion_channels.insert(0, ("HipPos", "SomeDirection"))
 	motion_channels.insert(0, ("HipPos", "SomeDirection"))
 	motion_channels.insert(0, ("HipPos", "SomeDirection"))
-	motion_channels.insert(0, ("Hips", "SomeDirection"))
-	motion_channels.insert(0, ("Hips", "SomeDirection"))
-	motion_channels.insert(0, ("Hips", "SomeDirection"))
+	motion_channels.insert(0, (root_name, "SomeDirection"))
+	motion_channels.insert(0, (root_name, "SomeDirection"))
+	motion_channels.insert(0, (root_name, "SomeDirection"))
 
-	for i in range(0, 3):
+	for i in range(0, frame_count):
 
 		channel_values = []
 		for channel in motion_channels:
@@ -197,7 +199,7 @@ def print_motions():
 
 	rotations = [ () ] * frame_count
 
-	for i in range(0, 3):
+	for i in range(0, frame_count):
 		t = 0;
 		for index in range(0, len(motion_channels)/3):
 
@@ -219,17 +221,19 @@ def print_motions():
 
 
 def rotation_matrix(z, x, y, offsets):
+	identity = np.array([[1.,0.,0],[0.,1.,0.],[0.,0.,1.]])
 	Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
 	X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
 	Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
-	val = Z.dot(X)
-	val = val.dot(Y)
+	val = Z.dot(identity)
+	val = X.dot(val)
+	val = Y.dot(val)
 
-	tvector = np.array([0,0,0,1])
+	#tvector = np.array([0,0,0,1])
 
 	#print val#.dot(t)
 	
-	val = np.vstack([np.c_[val,offsets], tvector])
+	#val = np.vstack([np.c_[val,offsets], tvector])
 	
 	return val
 
@@ -255,12 +259,14 @@ def rec_traversal(frame_number, name):
 def initial_skeleton(frame_number):
 	#traverse the entire skeleton and create points using the offset 
 	points = []
+	segments = []
 	diction = {}
 	for index in range(0, len(motion_channels)/3):
 		if (index == 1):
 			continue
 		name = motions[0][1][index*3][0]
 		offset = skeleton[name]['offsets']
+		parent = skeleton[name]['parent']
 
 		#print "Name is " + name 
 
@@ -273,34 +279,44 @@ def initial_skeleton(frame_number):
 			x = motions[frame_number][1][index*3][2]
 			y = motions[frame_number][1][index*3 + 1][2]
 			z = motions[frame_number][1][index*3 + 2][2]
-			pos = np.array([x, y, z, 0])
+			pos = np.array([x, y, z])
 			#print point
 			#print translation[frame_number][name]
 
-			point = np.dot(translation[frame_number][name], pos)
+			#point = np.add(pos, offset)
+			point = np.dot(pos, translation[frame_number][name])
+			point = np.add(pos, offset)
 			#print point
 			
 		else:
 			#print "HERE"
-			parent = skeleton[name]['parent']
+			
 
 			#print "Parent is" + parent
 			#print "Parent position is " 
 			#print (diction[parent][0], diction[parent][1], diction[parent][2])
-			point = np.dot(translation[frame_number][name], diction[parent])
+			
+			#point = np.add(diction[parent], offset)
+			point = np.dot(diction[parent], translation[frame_number][name])
+			point = np.add(pos, offset)
+			
+
 			#print x
 			#print "Position is "
 			#print (x, y, z)
 			
-			print point
+			#print point
 				
 			#print point
 
 		#print point
 		points.append(point)
+		if (parent != None):
+			segments.append((point, diction[parent]))
 		diction[name] = point
 	#print points
 	graph(points)
+	#graph2(segments, frame_number)
 	return points
 
 
@@ -334,9 +350,9 @@ def graph(arr):
 	#c = color.red
 
 	for i in arr:
-		i1 = i[0]/100
-		i2 = i[1]/100
-		i3 = i[2]/100
+		i1 = i[0]/50
+		i2 = i[1]/50
+		i3 = i[2]/50
 		#print (i1,i2,i3)
 		ball1 = sphere(make_trail = true, pos = (i1,i2,i3), radius = 0.05, color=color.red)
 		#c = curve(pos = (a[0], a[1], a[2]), radius=0.05)
@@ -349,6 +365,33 @@ def graph(arr):
 		#c.append(pos = ball1.pos)
 		#if (ball1.pos[0] > 6):
 			#ball1.color = color.yellow
+
+def graph2(arr, nr):
+
+	colors = [
+	#reddish colors
+	(1.00, 0.00, 0.00),(1.00, 0.03, 0.00),(1.00, 0.05, 0.00),(1.00, 0.07, 0.00),(1.00, 0.10, 0.00),(1.00, 0.12, 0.00),(1.00, 0.15, 0.00),(1.00, 0.17, 0.00),(1.00, 0.20, 0.00),(1.00, 0.23, 0.00),(1.00, 0.25, 0.00),(1.00, 0.28, 0.00),(1.00, 0.30, 0.00),(1.00, 0.33, 0.00),(1.00, 0.35, 0.00),(1.00, 0.38, 0.00),(1.00, 0.40, 0.00),(1.00, 0.42, 0.00),(1.00, 0.45, 0.00),(1.00, 0.47, 0.00),
+	#orangey colors
+	(1.00, 0.50, 0.00),(1.00, 0.53, 0.00),(1.00, 0.55, 0.00),(1.00, 0.57, 0.00),(1.00, 0.60, 0.00),(1.00, 0.62, 0.00),(1.00, 0.65, 0.00),(1.00, 0.68, 0.00),(1.00, 0.70, 0.00),(1.00, 0.72, 0.00),(1.00, 0.75, 0.00),(1.00, 0.78, 0.00),(1.00, 0.80, 0.00),(1.00, 0.82, 0.00),(1.00, 0.85, 0.00),(1.00, 0.88, 0.00),(1.00, 0.90, 0.00),(1.00, 0.93, 0.00),(1.00, 0.95, 0.00),(1.00, 0.97, 0.00),
+	#yellowy colors
+	(1.00, 1.00, 0.00),(0.95, 1.00, 0.00),(0.90, 1.00, 0.00),(0.85, 1.00, 0.00),(0.80, 1.00, 0.00),(0.75, 1.00, 0.00),(0.70, 1.00, 0.00),(0.65, 1.00, 0.00),(0.60, 1.00, 0.00),(0.55, 1.00, 0.00),(0.50, 1.00, 0.00),(0.45, 1.00, 0.00),(0.40, 1.00, 0.00),(0.35, 1.00, 0.00),(0.30, 1.00, 0.00),(0.25, 1.00, 0.00),(0.20, 1.00, 0.00),(0.15, 1.00, 0.00),(0.10, 1.00, 0.00),(0.05, 1.00, 0.00),
+	#greenish colors
+	(0.00, 1.00, 0.00),(0.00, 0.95, 0.05),(0.00, 0.90, 0.10),(0.00, 0.85, 0.15),(0.00, 0.80, 0.20),(0.00, 0.75, 0.25),(0.00, 0.70, 0.30),(0.00, 0.65, 0.35),(0.00, 0.60, 0.40),(0.00, 0.55, 0.45),(0.00, 0.50, 0.50),(0.00, 0.45, 0.55),(0.00, 0.40, 0.60),(0.00, 0.35, 0.65),(0.00, 0.30, 0.70),(0.00, 0.25, 0.75),(0.00, 0.20, 0.80),(0.00, 0.15, 0.85),(0.00, 0.10, 0.90),(0.00, 0.05, 0.95),
+	#blueish colors
+	(0.00, 0.00, 1.00),(0.05, 0.00, 1.00),(0.10, 0.00, 1.00),(0.15, 0.00, 1.00),(0.20, 0.00, 1.00),(0.25, 0.00, 1.00),(0.30, 0.00, 1.00),(0.35, 0.00, 1.00),(0.40, 0.00, 1.00),(0.45, 0.00, 1.00),(0.50, 0.00, 1.00),(0.55, 0.00, 1.00),(0.60, 0.00, 1.00),(0.65, 0.00, 1.00),(0.70, 0.00, 1.00),(0.75, 0.00, 1.00),(0.80, 0.00, 1.00),(0.85, 0.00, 1.00),(0.90, 0.00, 1.00),(0.95, 0.00, 1.00)
+	]
+
+	for i,j in arr:
+		i1 = i[0]/50
+		i2 = i[1]/50
+		i3 = i[2]/50
+
+		j1 = j[0]/50
+		j2 = j[1]/50
+		j3 = j[2]/50
+
+		L = curve(pos=[(i1,i2,i3), (j1,j2,j3)], radius=0.005)#, color=colors[nr])
+
 
 
 if __name__ == "__main__":
@@ -374,7 +417,9 @@ if __name__ == "__main__":
 	scene1 = display(title = "Mocap", x = 0, y =0, width = 800, height = 600, range = 10,
 		background=color.white)
 
-	for i in range(0, 3):
+
+	#print root_name
+	for i in range(0, 180):
 		initial_skeleton(i)
 
 
