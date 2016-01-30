@@ -4,13 +4,26 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 
 import numpy as np
+import sys
+import plot
+import parse
+import math
 
 scatter_matrix = []
 cov_matrix = []
 mean_vector = []
 
+FT_JOINT_LIST = ["RightForeArm", "RightArm", "RightHand", "RightShoulder",
+				"LeftForeArm", "LeftArm", "LeftHand", "LeftShoulder", "Head"]
+
+SESSION_11 = [(1371, 1503), (1788, 2037), (2425, 2540), (3000, 3116), (4191, 4295), 
+			(4795, 5049), (5471, 5728), (6172, 6342), (6807, 6963), (7602, 7770)]
+
+
 np.random.seed(1) # random seed for consistency
 
+
+## TEST DATA ##
 mu_vec1 = np.array([0,0,0])
 cov_mat1 = np.array([[1,0,0],[0,1,0],[0,0,1]])
 class1_sample = np.random.multivariate_normal(mu_vec1, cov_mat1, 20).T
@@ -19,11 +32,11 @@ assert class1_sample.shape == (3,20), "The matrix does not have the required dim
 mu_vec2 = np.array([1,1,1])
 cov_mat2 = np.array([[1,0,0],[0,1,0],[0,0,1]])
 class2_sample = np.random.multivariate_normal(mu_vec2, cov_mat2, 20).T
-assert class1_sample.shape == (3,20), "The matrix does not have the required dimension"
+assert class2_sample.shape == (3,20), "The matrix does not have the required dimension"
 
 def visualize_difference(mat1, mat2):
 	print "the difference between m1 and m2"
-	
+
 	fig = plt.figure(figsize=(8,8))
 	ax = fig.add_subplot(111, projection='3d')
 	plt.rcParams['legend.fontsize'] = 10
@@ -35,6 +48,7 @@ def visualize_difference(mat1, mat2):
 	        '^', markersize=8, alpha=0.5, color='red', label='class2')
 
 	plt.title('The difference between the two matrices')
+
 	ax.legend(loc='upper right')
 
 	plt.show()
@@ -65,7 +79,7 @@ def eigen(mat):
 	eig_val_sc, eig_vec_sc = np.linalg.eig(scatter_matrix)
 
 	# eigenvectors and eigenvalues for the from the covariance matrix
-	eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mattrix)
+	eig_val_cov, eig_vec_cov = np.linalg.eig(cov_matrix)
 
 	for i in range(len(eig_val_sc)):
 	    eigvec_sc = eig_vec_sc[:,i].reshape(1,3).T
@@ -74,10 +88,34 @@ def eigen(mat):
 def pca(mat):
 	print "embedded PCA"
 
+def main(a, joints_array):
+	shot_nr_1 = (1371, 3216)
+	length = shot_nr_1[1] - shot_nr_1[0]
+
+	plot_rms_arrays = []
+	plot_arr = []
+
+	for joint in joints_array:
+		rms_arr = []
+		for i in range(shot_nr_1[0], shot_nr_1[1]):
+			x = a[i][joint][0]
+			y = a[i][joint][1]
+			z = a[i][joint][2]
+			rms = math.sqrt(float(1)/3 *( x**2 + y**2 + z**2))
+			rms_arr.append(rms)
+		plot_rms_arrays.append(rms_arr)
+
+	for array in plot_rms_arrays :
+		plot_arr.append(([i for i in range(length)], array))
+
+	plot.draw(plot_arr)
+
+
 if __name__ == "__main__":
-	a = 1
-	b = 2
-	visualize_difference(a, b)
+	arr2 = parse.motion_data('motion_files/fahim_11_Char00', "")
+	main(arr2, ["RightForeArm", "RightArm", "RightHand"])
+	
+	#visualize_difference(a, b)
 
 
 #### Benchmark using nearpy and estimate performance 

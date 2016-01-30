@@ -98,7 +98,7 @@ def score(dict, arr, p):
 	for group in arr:
 		summation = 0;
 		for el in group:
-			summation += mean(dict[el]):
+			summation += mean(dict[el])
 		summation = summation / len(group)
 		results.append(summation)
 

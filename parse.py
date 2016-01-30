@@ -2,10 +2,12 @@ import re
 import numpy as np
 import math
 from scipy import linalg
-from visual import *
+import sys
+#from visual import *
 
-#bvh_file = "02_01.bvh"
-bvh_file = "Example1.bvh"
+bvh_file = ""
+mode = "CMU"
+#mode = ""
 
 
 def identifier(scanner, token):  return "IDENT", token
@@ -14,17 +16,21 @@ def digit(scanner, token):       return "DIGIT", token
 def open_brace(scanner, token):  return "OPEN_BRACE", token
 def close_brace(scanner, token): return "CLOSE_BRACE", token
 
+#VARIABLES
 current_token = 0
 frame_count = 0
-
+root_name = ""
+#DATA STRUCTURES
 skeleton = {}
 translation = []
 bone_context = []
 motion_channels = []
 motions = []
-root_name = ""
-diction = {}
+#diction = {}
 time_series = {}
+global_position = []
+root_name = ""
+
 
 def new_bone(parent, name):
 	bone = { "parent" : parent, "channels" : [], "offsets" : []}
@@ -161,6 +167,7 @@ def parse_motion(bvh):
 		return None
 	current_token = current_token + 1
 
+
 	############# TEMPORARY FIX #######################
 
 	translation = [ () ] * frame_count
@@ -191,6 +198,7 @@ def parse_motion(bvh):
 			current_token = current_token + 1
 		
 		motions[i] = (frame_time, channel_values)
+
 		frame_time = frame_time + frame_rate
 
 def sin(x):
@@ -231,8 +239,8 @@ def rotation_matrix(z, x, y, offsets):
 	X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
 	Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
 	val = Z.dot(identity)
-	val = Y.dot(val)
 	val = X.dot(val)
+	val = Y.dot(val)
 
 	#tvector = np.array([0,0,0,1])
 
@@ -262,12 +270,10 @@ def rec_traversal(frame_number, name):
 			#look up the parent and skeleton and compute all the way up
 
 def initial_skeleton(frame_number):
-	global diction
-
-	#traverse the entire skeleton and create points using the offset
+	#traverse the entire skeleton and create points using the offset 
 	points = []
 	segments = []
-	
+	diction = {}
 	for index in range(0, len(motion_channels)/3):
 		if (index == 1):
 			continue
@@ -323,47 +329,8 @@ def initial_skeleton(frame_number):
 		diction[name] = point
 	#print points
 	#graph(points)
-	#graph2(segments, frame_number)
-	#triangular_mapping("me", frame_number)
+	graph2(segments, frame_number)
 	return points
-
-def triangular_mapping(joints_arr, nr):
-	global diction
-	global time_series
-
-	segments = []
-	joints_temp = ["Neck", "RightShoulder", "LeftUpLeg"]
-	joints_arr = joints_temp
-
-	print diction['Neck']
-
-	time_series = {}
-	areas = []
-
-	for j in joints_arr:
-		time_series[j] = []
-		time_series[j].append(diction[j])
-
-	print len(joints_arr[0])-1
-	print joints_arr[0]
-
-	x = time_series[joints_arr[0]][len(time_series[joints_arr[0]])-1]
-	y = time_series[joints_arr[1]][len(time_series[joints_arr[1]])-1]
-	z = time_series[joints_arr[2]][len(time_series[joints_arr[2]])-1]
-
-	segments.append((x, y))
-	segments.append((x, z))
-	segments.append((y, z))
-
-	area = np.add(x, y)
-	area = np.add(area, z)
-
-	areas.append(area)
-
-	graph2(segments, nr)
-
-
-	print skeleton
 
 
 
@@ -436,27 +403,237 @@ def graph2(arr, nr):
 		j2 = j[1]/50
 		j3 = j[2]/50
 
-		L = curve(pos=[(i1,i2,i3), (j1,j2,j3)], radius=0.005, color=colors[nr])
+		L = curve(pos=[(i1,i2,i3), (j1,j2,j3)], radius=0.005)#, color=colors[nr])
+
+def cos(x):
+	return math.cos(math.radians(x))
+
+def print_motions():
+	global translation
+	print len(motion_channels)
+	rotations = [ () ] * frame_count
+
+	
+	if (mode == "CMU"):
+		#######################################################
+		## Frame count
+		#######################################################
+		for i in range(0, frame_count):
+			t = 0;
+
+			for index in range(0, len(motion_channels)/3):
+				z = motions[i][1][index*3][2]
+				y = motions[i][1][index*3 + 1][2]
+				x = motions[i][1][index*3 + 2][2]
+				name = motion_channels[index*3][0]
+				
+				if (name == "HipPos"):
+					name = root_name
+				offsets = np.array(skeleton[name]['offsets'])
+				val = rotation_matrix(z,y,x,offsets)
+				translation[i][name] = val
+	else:
+		#######################################################
+		## Frame count
+		#######################################################
+		for i in range(0, frame_count):
+			t = 0;
+
+			for index in range(0, len(motion_channels)/6):
+				y = motions[i][1][index*6 + 3][2]
+				x = motions[i][1][index*6 + 4][2]
+				z = motions[i][1][index*3 + 5][2]
+				name = motion_channels[index*6][0]
+				
+				if (name == "HipPos"):
+					name = root_name
+				offsets = np.array(skeleton[name]['offsets'])
+				val = rotation_matrix(z,y,x,offsets)
+				translation[i][name] = val
 
 
-if __name__ == "__main__":
+def rotation_matrix(z, y, x, offsets):
+	identity = np.array([[1.,0.,0],[0.,1.,0.],[0.,0.,1.]])
+	Z = np.array([[cos(z),-sin(z),0],[sin(z), cos(z), 0], [0,0,1]]);
+	X = np.array([[1, 0, 0],[0, cos(x), -sin(x)], [0, sin(x), cos(x)]]);
+	Y = np.array([[cos(y), 0, sin(y)], [0, 1, 0], [-sin(y), 0, cos(y)]]);
+	val = Y.dot(identity)
+	val = X.dot(val)
+	val = Z.dot(val)	
+	return val
+
+def initial_skeleton(frame_number):
+	diction = {}
+	global global_position
+	#traverse the entire skeleton and create points using the offset
+	points = []
+	segments = []
+	if (mode == "CMU"):
+		joints_number = len(motion_channels)/3
+	else:
+		joints_number = len(motion_channels)/6
+
+	if(frame_number == 0):
+		global_position = [()] * frame_count
+
+	offset = skeleton[root_name]['offsets']
+	x = motions[frame_number][1][0][2]
+	y = motions[frame_number][1][1][2]
+	z = motions[frame_number][1][2][2]
+	pos = np.array([x, y, z])
+	pos = np.add(pos, offset)
+	point = np.dot(pos, translation[frame_number][root_name])
+		
+	diction[root_name] = [point[0], point[1], point[2]]
+
+	for index in range(1, joints_number):
+		if (index == 1 and mode == "CMU"):
+			continue
+		
+		if (mode == "CMU"):
+			name = motions[0][1][index*3][0]
+		else:
+			name = motions[0][1][index*6][0]
+
+		offset = skeleton[name]['offsets']
+		parent = skeleton[name]['parent']
+		
+		pos = np.add(diction[parent], offset)
+		point = np.dot(pos, translation[frame_number][name])
+		
+		points.append(point)
+		
+		if (parent != None):
+			segments.append((point, diction[parent]))
+
+		diction[name] = [point[0], point[1], point[2]]
+	
+	global_position[frame_number] = diction
+	return points
+
+def triangular_mapping(joints_arr, nr):
+	global diction
+	global time_series
+	segments = []
+	joints_temp = ["Neck", "RightShoulder", "LeftUpLeg"]
+	joints_arr = joints_temp
+	print diction['Neck']
+	time_series = {}
+	areas = []
+	for j in joints_arr:
+		time_series[j] = []
+		time_series[j].append(diction[j])
+	x = time_series[joints_arr[0]][len(time_series[joints_arr[0]])-1]
+	y = time_series[joints_arr[1]][len(time_series[joints_arr[1]])-1]
+	z = time_series[joints_arr[2]][len(time_series[joints_arr[2]])-1]
+	segments.append((x, y))
+	segments.append((x, z))
+	segments.append((y, z))
+	area = np.add(x, y)
+	area = np.add(area, z)
+	areas.append(area)
+	graph2(segments, nr)
+	print skeleton
+
+def graph(arr):
+	#c = color.red
+	for i in arr:
+		i1 = i[0]/50
+		i2 = i[1]/50
+		i3 = i[2]/50
+		#print (i1,i2,i3)
+		ball1 = sphere(make_trail = true, pos = (i1,i2,i3), radius = 0.05, color=color.red)
+		#c = curve(pos = (a[0], a[1], a[2]), radius=0.05)
+	#a = vector(0.1,0,0)
+	#while True:
+		#rate(10)
+		#ball1.pos = ball1.pos + a
+		#c.append(pos = ball1.pos)
+		#if (ball1.pos[0] > 6):
+			#ball1.color = color.yellow
+
+def graph2(arr, nr):
+	colors = [
+	#reddish colors
+	(1.00, 0.00, 0.00),(1.00, 0.03, 0.00),(1.00, 0.05, 0.00),(1.00, 0.07, 0.00),(1.00, 0.10, 0.00),(1.00, 0.12, 0.00),(1.00, 0.15, 0.00),(1.00, 0.17, 0.00),(1.00, 0.20, 0.00),(1.00, 0.23, 0.00),(1.00, 0.25, 0.00),(1.00, 0.28, 0.00),(1.00, 0.30, 0.00),(1.00, 0.33, 0.00),(1.00, 0.35, 0.00),(1.00, 0.38, 0.00),(1.00, 0.40, 0.00),(1.00, 0.42, 0.00),(1.00, 0.45, 0.00),(1.00, 0.47, 0.00),
+	#orangey colors
+	(1.00, 0.50, 0.00),(1.00, 0.53, 0.00),(1.00, 0.55, 0.00),(1.00, 0.57, 0.00),(1.00, 0.60, 0.00),(1.00, 0.62, 0.00),(1.00, 0.65, 0.00),(1.00, 0.68, 0.00),(1.00, 0.70, 0.00),(1.00, 0.72, 0.00),(1.00, 0.75, 0.00),(1.00, 0.78, 0.00),(1.00, 0.80, 0.00),(1.00, 0.82, 0.00),(1.00, 0.85, 0.00),(1.00, 0.88, 0.00),(1.00, 0.90, 0.00),(1.00, 0.93, 0.00),(1.00, 0.95, 0.00),(1.00, 0.97, 0.00),
+	#yellowy colors
+	(1.00, 1.00, 0.00),(0.95, 1.00, 0.00),(0.90, 1.00, 0.00),(0.85, 1.00, 0.00),(0.80, 1.00, 0.00),(0.75, 1.00, 0.00),(0.70, 1.00, 0.00),(0.65, 1.00, 0.00),(0.60, 1.00, 0.00),(0.55, 1.00, 0.00),(0.50, 1.00, 0.00),(0.45, 1.00, 0.00),(0.40, 1.00, 0.00),(0.35, 1.00, 0.00),(0.30, 1.00, 0.00),(0.25, 1.00, 0.00),(0.20, 1.00, 0.00),(0.15, 1.00, 0.00),(0.10, 1.00, 0.00),(0.05, 1.00, 0.00),
+	#greenish colors
+	(0.00, 1.00, 0.00),(0.00, 0.95, 0.05),(0.00, 0.90, 0.10),(0.00, 0.85, 0.15),(0.00, 0.80, 0.20),(0.00, 0.75, 0.25),(0.00, 0.70, 0.30),(0.00, 0.65, 0.35),(0.00, 0.60, 0.40),(0.00, 0.55, 0.45),(0.00, 0.50, 0.50),(0.00, 0.45, 0.55),(0.00, 0.40, 0.60),(0.00, 0.35, 0.65),(0.00, 0.30, 0.70),(0.00, 0.25, 0.75),(0.00, 0.20, 0.80),(0.00, 0.15, 0.85),(0.00, 0.10, 0.90),(0.00, 0.05, 0.95),
+	#blueish colors
+	(0.00, 0.00, 1.00),(0.05, 0.00, 1.00),(0.10, 0.00, 1.00),(0.15, 0.00, 1.00),(0.20, 0.00, 1.00),(0.25, 0.00, 1.00),(0.30, 0.00, 1.00),(0.35, 0.00, 1.00),(0.40, 0.00, 1.00),(0.45, 0.00, 1.00),(0.50, 0.00, 1.00),(0.55, 0.00, 1.00),(0.60, 0.00, 1.00),(0.65, 0.00, 1.00),(0.70, 0.00, 1.00),(0.75, 0.00, 1.00),(0.80, 0.00, 1.00),(0.85, 0.00, 1.00),(0.90, 0.00, 1.00),(0.95, 0.00, 1.00)
+	]
+	for i,j in arr:
+		i1 = i[0]/50
+		i2 = i[1]/50
+		i3 = i[2]/50
+		j1 = j[0]/50
+		j2 = j[1]/50
+		j3 = j[2]/50
+		#L = curve(pos=[(i1,i2,i3), (j1,j2,j3)], radius=0.005, color=colors[nr])
+
+def motion_data(file_name, mode_input):
+	global mode
+	mode = mode_input
+	main(file_name)
+	return global_position
+
+def reset():
+	current_token = 0
+	frame_count = 0
+	root_name = ""
+	#DATA STRUCTURES
+	skeleton = {}
+	translation = []
+	bone_context = []
+	motion_channels = []
+	motions = []
+	diction = {}
+	time_series = {}
+	global_position = []
+
+def main(file_name):
+	global bvh_file
+	global bvh
+	global tokens
+	global current_token
+	global frame_count
+
+	bvh_file = file_name + ".bvh"
 	bvh_file = open(bvh_file, "r")
 	bvh = bvh_file.read()
 	bvh_file.close()
 	tokens, remainder = scanner.scan(bvh)
 	parse_hierarchy(tokens)
-	#for (name,bone) in skeleton.iteritems():
-	#	print "Bone " + name
-	#	if bone.has_key("channels"):
-	#		print "Channels ", bone["channels"]
-	#	print "Offsets ", bone["offsets"]
 
 	a = np.array([1,2,3])
 	b = np.array([[0,0,0,6],[0,0,0,4],[0,0,0,6]])
 
 	current_token = current_token + 1
+	print current_token
 	parse_motion(tokens)
 	print_motions()
+
+	#calculate_animation()
+	#scene1 = display(title = "Mocap", x = 0, y =0, width = 800, height = 600, range = 10,
+		#background=color.white)
+	print frame_count
+
+	#######################################################
+	## Frame count
+	#######################################################
+
+	for i in range(0, frame_count):
+		initial_skeleton(i)
+	#motion_data(file_name)
+	
+
+if __name__ == "__main__":
+	#main('02_01')
+	motion_data('02_01')
+
 	calculate_animation()
 
 	scene1 = display(title = "Mocap", x = 0, y =0, width = 800, height = 600, range = 10,

@@ -1,0 +1,42 @@
+
+##################################
+## Compression of the data #######
+##################################
+Least squares optimization
+Euclidian distance between matrices
+Principal component analysis
+
+
+
+______________________________________________________________
+
+RIGHT BEFORE SHOT
+______________________________________________________________
+
+alignment - check coordinates of hip knee shoulder and compute a score based on that
+leaning at release - determining the degree of "leaning". we can use the chebyshev center with added weights
+foot placement - check the distance between ankles and compute balance or stability
+______________________________________________________________
+
+RIGHT AFTER SHOT
+______________________________________________________________
+
+low arc on the shot - check elbow/wrist. map as a projectile throwing lever
+full follow - check elbow/wrist. complete motion.
+interferennce from non-shooting hand. ? 
+too much tension in shooting arm. full shoulder extension, elbow extension + wrist
+relaxation of the shooting arm. ? 
+
+ball shot too - compute the speed of a throw 
+______________________________________________________________
+
+
+
+
+
+Need to automatically segment the motion in order to be able to complete the asessment. 
+
+
+
+* The 10 shot challenge 
+* May want to use databases only in order to track progress across time 
