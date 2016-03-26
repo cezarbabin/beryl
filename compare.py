@@ -89,21 +89,25 @@ def pca(mat):
 	print "embedded PCA"
 
 def main(a, joints_array):
-	shot_nr_1 = (1371, 3216)
+	shot_nr_1 = (1371, 1503)
 	length = shot_nr_1[1] - shot_nr_1[0]
 
 	plot_rms_arrays = []
+	position_arrays = []
 	
 	for joint in joints_array:
 		rms_arr = []
+		position_arr = []
 		for i in range(shot_nr_1[0], shot_nr_1[1]):
 			x = a[i][joint][0]
 			y = a[i][joint][1]
 			z = a[i][joint][2]
 			rms = math.sqrt(float(1)/3 *( x**2 + y**2 + z**2))
 			rms_arr.append(rms)
+			position_arr.append((x,y,z))
 		plot_rms_arrays.append(rms_arr)
-	return plot_rms_arrays
+		position_arrays.append(position_arr)
+	return plot_rms_arrays, position_arrays
 
 def plot_data(plot_rms_arrays):
 	plot_arr = []
