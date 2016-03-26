@@ -93,8 +93,7 @@ def main(a, joints_array):
 	length = shot_nr_1[1] - shot_nr_1[0]
 
 	plot_rms_arrays = []
-	plot_arr = []
-
+	
 	for joint in joints_array:
 		rms_arr = []
 		for i in range(shot_nr_1[0], shot_nr_1[1]):
@@ -104,16 +103,19 @@ def main(a, joints_array):
 			rms = math.sqrt(float(1)/3 *( x**2 + y**2 + z**2))
 			rms_arr.append(rms)
 		plot_rms_arrays.append(rms_arr)
+	return plot_rms_arrays
 
+def plot_data(plot_rms_arrays):
+	plot_arr = []
 	for array in plot_rms_arrays :
-		plot_arr.append(([i for i in range(length)], array))
-
+		plot_arr.append(([i for i in range(len(plot_rms_arrays[0]))], array))
 	plot.draw(plot_arr)
-
 
 if __name__ == "__main__":
 	arr2 = parse.motion_data('motion_files/fahim_11_Char00', "")
-	main(arr2, ["RightForeArm", "RightArm", "RightHand"])
+	filtered_arrays = compare.main(arr2, ["RightForeArm", "RightArm", "RightHand"])
+	plot_data(filtered_arrays)
+
 	
 	#visualize_difference(a, b)
 
