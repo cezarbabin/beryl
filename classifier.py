@@ -17,17 +17,17 @@ def populateA(joints):
   num_intervals = 10
   A = [[[0 for x in range(2)] for x in range(9)] for x in range(num_intervals)]
   tot_num_frames = len(joints[0])
-  print "Total Number of Frames: " + str(tot_num_frames)
+  #print "Total Number of Frames: " + str(tot_num_frames)
   frames_per_interval = tot_num_frames/float(num_intervals)
-  print "Frames Per Interval (w/ decimal): " + str(frames_per_interval)
+  #print "Frames Per Interval (w/ decimal): " + str(frames_per_interval)
   frames_per_small_interval = int(math.floor(frames_per_interval))
-  print "Frames Per Small Interval: " + str(frames_per_small_interval)
+  #print "Frames Per Small Interval: " + str(frames_per_small_interval)
   num_larger_intervals = num_intervals*(float(frames_per_interval-frames_per_small_interval))
   num_larger_intervals = int(math.ceil(num_larger_intervals))
-  print "Number of Large Intervals: " + str(num_larger_intervals)
+  #print "Number of Large Intervals: " + str(num_larger_intervals)
   for j in range(0,9):
     joint = joints[j-1]
-    print "Currently processing joint at index: " + str(j-1)
+    #print "Currently processing joint at index: " + str(j-1)
     cur_frame = 0
     for i in range(0,num_intervals):
       num_frames = frames_per_small_interval
@@ -45,20 +45,20 @@ def populateA(joints):
         y_pos_sum += joint[cur_frame][1]
         #z_pos_sum += joint[cur_frame][2]
         cur_frame+=1
-        print "This is a large interval"
+        #print "This is a large interval"
       else:
-        print "This is a small interval"
-      print "Interval has this number of frames: " + str(num_frames)
-      print "Current frame: " + str(cur_frame)
+        #print "This is a small interval"
+      #print "Interval has this number of frames: " + str(num_frames)
+      #print "Current frame: " + str(cur_frame)
       x_pos_avg = x_pos_sum/num_frames
       y_pos_avg = y_pos_sum/num_frames
-      print "x_pos_sum: " + str(x_pos_sum)
-      print "x_pos_avg: " + str(x_pos_avg)
-      print "y_pos_sum: " + str(y_pos_sum)
-      print "y_pos_avg: " + str(y_pos_avg)
+      #print "x_pos_sum: " + str(x_pos_sum)
+      #print "x_pos_avg: " + str(x_pos_avg)
+      #print "y_pos_sum: " + str(y_pos_sum)
+      #print "y_pos_avg: " + str(y_pos_avg)
       #z_pos_avg = z_pos_sum/num_frames
       index = (((i)*9)+j)
-      print "index: " + str(index)
+      #print "index: " + str(index)
       A[i][j][0] = x_pos_avg
       A[i][j][1] = y_pos_avg
   return A
