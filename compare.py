@@ -88,8 +88,8 @@ def eigen(mat):
 def pca(mat):
 	print "embedded PCA"
 
-def main(a, joints_array):
-	shot_nr_1 = (1371, 1503)
+def main(a, joints_array, i):
+	shot_nr_1 = SESSION_11[i]
 	length = shot_nr_1[1] - shot_nr_1[0]
 
 	plot_rms_arrays = []
