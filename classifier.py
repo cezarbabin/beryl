@@ -11,11 +11,11 @@ import sys
 # [RightShoulder, RightArm, RightForearm, RightHand, LeftShoulder, LeftArm, LeftForearm, LeftHand, Head]
 #    each joint object is an array of n (x,y,z) positions where n is the number of frames
 #
-# Output: A (num_intervals*9)*2 matrix (called A) where every set of 9 size(2) arrays represents the average position (x,y)
-# of each joint for one interval. There are num_intervals such sets representing the 10 intervals.
+# Output: A num_intervals*9*2 matrix (called A) where every array of 9 size(2) arrays represents the average position (x,y)
+# of each joint for one interval. There are num_intervals such arrays representing each interval.
 def populateA(joints):
   num_intervals = 10
-  A = [[0 for x in range(2)] for x in range(num_intervals*9)]
+  A = [[[0 for x in range(2)] for x in range(9)] for x in range(num_intervals)]
   tot_num_frames = len(joints[0])
   print "Total Number of Frames: " + str(tot_num_frames)
   frames_per_interval = tot_num_frames/float(num_intervals)
@@ -59,8 +59,8 @@ def populateA(joints):
       #z_pos_avg = z_pos_sum/num_frames
       index = (((i)*9)+j)
       print "index: " + str(index)
-      A[index][0] = x_pos_avg
-      A[index][1] = y_pos_avg
+      A[i][j][0] = x_pos_avg
+      A[i][j][1] = y_pos_avg
   return A
 
 # def createMatrix():
