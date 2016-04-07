@@ -4,10 +4,18 @@ import math
 from scipy import linalg
 import sys
 
+# Takes in an array of x,y,z positions for all 9 joints and outputs an
+# average of the x,y positions within 10 intervals of ~equal size for each joint
+# 
+# Input: joints --> an array of 9 joints objects in the order
+# [RightShoulder, RightArm, RightForearm, RightHand, LeftShoulder, LeftArm, LeftForearm, LeftHand, Head]
+#    each joint object is an array of n (x,y,z) positions where n is the number of frames
+#
+# Output: A num_intervals*9*2 matrix (called A) where every array of 9 size(2) arrays represents the average position (x,y)
+# of each joint for one interval. There are num_intervals such arrays representing each interval.
 def populateA(joints):
   num_intervals = 10
-  A = [[0,0]*90]
-  #A = [9*num_intervals][2]
+  A = [[[0 for x in range(2)] for x in range(9)] for x in range(num_intervals)]
   tot_num_frames = len(joints[0])
   print "Total Number of Frames: " + str(tot_num_frames)
   frames_per_interval = tot_num_frames/float(num_intervals)
@@ -17,11 +25,11 @@ def populateA(joints):
   num_larger_intervals = num_intervals*(float(frames_per_interval-frames_per_small_interval))
   num_larger_intervals = int(math.ceil(num_larger_intervals))
   print "Number of Large Intervals: " + str(num_larger_intervals)
-  for j in range(1,9):
+  for j in range(0,9):
     joint = joints[j-1]
     print "Currently processing joint at index: " + str(j-1)
     cur_frame = 0
-    for i in range(1,num_intervals):
+    for i in range(0,num_intervals):
       num_frames = frames_per_small_interval
       x_pos_sum = 0
       y_pos_sum = 0
@@ -49,8 +57,29 @@ def populateA(joints):
       print "y_pos_sum: " + str(y_pos_sum)
       print "y_pos_avg: " + str(y_pos_avg)
       #z_pos_avg = z_pos_sum/num_frames
-      index = (((i-1)*9)+j)-1
+      index = (((i)*9)+j)
       print "index: " + str(index)
-      A[index][0] = x_pos_avg
-      A[index][1] = y_pos_avg
+      A[i][j][0] = x_pos_avg
+      A[i][j][1] = y_pos_avg
   return A
+
+# def createMatrix():
+#   z = 0
+#   A = [[0 for x in range(2)] for x in range(90)]
+#   for j in range(0,9):
+#     for i in range(0,10):
+#       z += 1
+#       print "i: " + str(i)
+#       print "\nj: " + str(j) + "\n"
+#       index = (((i)*9)+j)
+#       #print "Iteration: \n i: " + str(i) + "\n j: " + str(j)
+#       #print "Size: " + str(len(A[0]))
+#       #print A
+#       print index
+#       #print z
+#       A[index][0] = index
+#       A[index][1] = index * 2
+#   return A
+
+# output = createMatrix()
+# output
