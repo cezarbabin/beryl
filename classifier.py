@@ -69,28 +69,30 @@ def populateA(joints):
   for j in range(0,9):
     B[j] = sum(A[j], ())
     #print B[j]
-  return B
+  C = sum(B, ())
+  return C
 
-# def createMatrix():
-#   z = 0
-#   A = [[(0,0) for x in range(10)] for x in range(9)]
-#   for j in range(0,9):
-#     for i in range(0,10):
-#       z += 1
-#       #print "i: " + str(i)
-#       #print "\nj: " + str(j) + "\n"
-#       #index = (((i)*9)+j)
-#       #print "Iteration: \n i: " + str(i) + "\n j: " + str(j)
-#       #print "Size: " + str(len(A[0]))
-#       #print A
-#       #print index
-#       print z
-#       A[j][i] = (j,i)
-#   B = [0 for x in range(9)]
-#   for j in range(0,9):
-#       B[j] = sum(A[j], ())
-#       print B[j]
-#   return B
+def createMatrix():
+  z = 0
+  A = [[(0,0) for x in range(10)] for x in range(9)]
+  for j in range(0,9):
+    for i in range(0,10):
+      z += 1
+      #print "i: " + str(i)
+      #print "\nj: " + str(j) + "\n"
+      #index = (((i)*9)+j)
+      #print "Iteration: \n i: " + str(i) + "\n j: " + str(j)
+      #print "Size: " + str(len(A[0]))
+      #print A
+      #print index
+      print z
+      A[j][i] = (j,i)
+  B = [0 for x in range(9)]
+  for j in range(0,9):
+      B[j] = sum(A[j], ())
+      print B[j]
+  C = sum(B, ())
+  return C
 
-# output = createMatrix()
-# print output
+output = createMatrix()
+print output
