@@ -68,7 +68,7 @@ def populateA(joints):
   B = [0 for x in range(9)]
   for j in range(0,9):
     B[j] = sum(A[j], ())
-    print B[j]
+    #print B[j]
   return B
 
 # def createMatrix():
