@@ -15,7 +15,7 @@ import sys
 # of each joint for one interval. There are num_intervals such arrays representing each interval.
 def populateA(joints):
   num_intervals = 10
-  A = [[[0 for x in range(2)] for x in range(9)] for x in range(num_intervals)]
+  A = [[(0,0) for x in range(num_intervals)] for x in range(9)]
   tot_num_frames = len(joints[0])
   #print "Total Number of Frames: " + str(tot_num_frames)
   frames_per_interval = tot_num_frames/float(num_intervals)
@@ -46,7 +46,7 @@ def populateA(joints):
         #z_pos_sum += joint[cur_frame][2]
         cur_frame+=1
         #print "This is a large interval"
-      else:
+      #else:
         #print "This is a small interval"
       #print "Interval has this number of frames: " + str(num_frames)
       #print "Current frame: " + str(cur_frame)
@@ -57,29 +57,40 @@ def populateA(joints):
       #print "y_pos_sum: " + str(y_pos_sum)
       #print "y_pos_avg: " + str(y_pos_avg)
       #z_pos_avg = z_pos_sum/num_frames
-      index = (((i)*9)+j)
+      #index = (((i)*9)+j)
       #print "index: " + str(index)
-      A[i][j][0] = x_pos_avg
-      A[i][j][1] = y_pos_avg
-  return A
+
+      # This is an output with an array of 9 arrays, each of which contains an array of 10 tuples
+      A[j][i] = (x_pos_avg,y_pos_avg)
+  # This is an output that consists of one array containing 9 elements, each of which is a tuple of 20 elements.
+  # The 9 elements correspond to the 9 joints; the 20 elements correspond to the (x1,y1,...,x10,y10) avg x and y
+  # positions for the 10 intervals
+  B = [0 for x in range(9)]
+  for j in range(0,9):
+    B[j] = sum(A[j], ())
+    print B[j]
+  return B
 
 # def createMatrix():
 #   z = 0
-#   A = [[0 for x in range(2)] for x in range(90)]
+#   A = [[(0,0) for x in range(10)] for x in range(9)]
 #   for j in range(0,9):
 #     for i in range(0,10):
 #       z += 1
-#       print "i: " + str(i)
-#       print "\nj: " + str(j) + "\n"
-#       index = (((i)*9)+j)
+#       #print "i: " + str(i)
+#       #print "\nj: " + str(j) + "\n"
+#       #index = (((i)*9)+j)
 #       #print "Iteration: \n i: " + str(i) + "\n j: " + str(j)
 #       #print "Size: " + str(len(A[0]))
 #       #print A
-#       print index
-#       #print z
-#       A[index][0] = index
-#       A[index][1] = index * 2
-#   return A
+#       #print index
+#       print z
+#       A[j][i] = (j,i)
+#   B = [0 for x in range(9)]
+#   for j in range(0,9):
+#       B[j] = sum(A[j], ())
+#       print B[j]
+#   return B
 
 # output = createMatrix()
-# output
+# print output
