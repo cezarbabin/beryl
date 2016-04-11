@@ -19,6 +19,12 @@ FT_JOINT_LIST = ["RightForeArm", "RightArm", "RightHand", "RightShoulder",
 SESSION_11 = [(1371, 1503), (1788, 2037), (2425, 2540), (3000, 3116), (4191, 4295), 
 			(4795, 5049), (5471, 5728), (6172, 6342), (6807, 6963), (7602, 7770)]
 
+SESSION_15 = [(2351, 2482), (3232, 3397), (4146,  4296), (5501, 5640), (6129, 6261), 
+			(6712, 6858), (7340, 7491), (8364, 8469), (9150, 9284), (10224, 10343)]
+
+SESSION_13 = [(1527,1652),(2175,2291),(2842,2969),(3640,3769),(4300,4425),(5328,5443),
+			(6290,6410),(6975,7091),(7740,7862),(8792,8907)]
+
 
 np.random.seed(1) # random seed for consistency
 
@@ -88,8 +94,8 @@ def eigen(mat):
 def pca(mat):
 	print "embedded PCA"
 
-def main(a, joints_array, i):
-	shot_nr_1 = SESSION_11[i]
+def main(a, joints_array, i, session):
+	shot_nr_1 = session[i]
 	length = shot_nr_1[1] - shot_nr_1[0]
 
 	plot_rms_arrays = []
